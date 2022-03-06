@@ -367,7 +367,12 @@ func (p *pageImpl) WaitForResponse(url interface{}, options ...interface{}) Resp
 		option.Timeout = Float(p.timeoutSettings.Timeout())
 	}
 	eventData := <-waitForEvent(p, "response", p.timeoutSettings.Timeout(), predicate)
-	return eventData.(*responseImpl)
+	if eventData != nil {
+		return eventData.(*responseImpl)
+	} else {
+		return nil
+	}
+
 }
 
 func (p *pageImpl) ExpectEvent(event string, cb func() error, predicates ...interface{}) (interface{}, error) {
