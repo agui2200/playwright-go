@@ -151,7 +151,7 @@ func (f *frameImpl) WaitForURL(url string, options ...FrameWaitForURLOptions) er
 }
 
 func (f *frameImpl) WaitForEvent(event string, predicate ...interface{}) interface{} {
-	return <-waitForEvent(f, event, predicate...)
+	return <-waitForEvent(f, event, f.page.timeoutSettings.Timeout(), predicate...)
 }
 
 func (f *frameImpl) WaitForNavigation(options ...PageWaitForNavigationOptions) (Response, error) {
@@ -180,7 +180,7 @@ func (f *frameImpl) WaitForNavigation(options ...PageWaitForNavigationOptions) (
 	select {
 	case <-deadline:
 		return nil, fmt.Errorf("Timeout %.2fms exceeded.", *option.Timeout)
-	case eventData := <-waitForEvent(f, "navigated", predicate):
+	case eventData := <-waitForEvent(f, "navigated", *option.Timeout, predicate):
 		event := eventData.(map[string]interface{})
 		if event["newDocument"] != nil && event["newDocument"].(map[string]interface{})["request"] != nil {
 			request := fromChannel(event["newDocument"].(map[string]interface{})["request"]).(*requestImpl)

@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/danwakefield/fnmatch"
 )
@@ -299,7 +300,7 @@ func newTimeoutSettings(parent *timeoutSettings) *timeoutSettings {
 	}
 }
 
-func waitForEvent(emitter EventEmitter, event string, predicate ...interface{}) <-chan interface{} {
+func waitForEvent(emitter EventEmitter, event string, timeout float64, predicate ...interface{}) <-chan interface{} {
 	evChan := make(chan interface{}, 1)
 	removeHandler := make(chan bool, 1)
 	handler := func(ev ...interface{}) {
@@ -319,8 +320,15 @@ func waitForEvent(emitter EventEmitter, event string, predicate ...interface{}) 
 		}
 	}
 	go func() {
-		<-removeHandler
-		emitter.RemoveListener(event, handler)
+		deadline := time.After(time.Duration(timeout) * time.Millisecond)
+		select {
+		case <-deadline:
+			evChan <- nil
+			emitter.RemoveListener(event, handler)
+		case <-removeHandler:
+			emitter.RemoveListener(event, handler)
+		}
+
 	}()
 	emitter.On(event, handler)
 	return evChan

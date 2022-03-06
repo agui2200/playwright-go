@@ -220,7 +220,7 @@ func (b *browserContextImpl) Unroute(url interface{}, handlers ...routeHandler) 
 }
 
 func (b *browserContextImpl) WaitForEvent(event string, predicate ...interface{}) interface{} {
-	return <-waitForEvent(b, event, predicate...)
+	return <-waitForEvent(b, event, b.timeoutSettings.Timeout(), predicate...)
 }
 
 func (b *browserContextImpl) ExpectEvent(event string, cb func() error) (interface{}, error) {

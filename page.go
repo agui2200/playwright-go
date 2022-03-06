@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"reflect"
-	"time"
 )
 
 type pageImpl struct {
@@ -322,7 +321,7 @@ func (p *pageImpl) Click(selector string, options ...PageClickOptions) error {
 }
 
 func (p *pageImpl) WaitForEvent(event string, predicate ...interface{}) interface{} {
-	return <-waitForEvent(p, event, predicate...)
+	return <-waitForEvent(p, event, p.timeoutSettings.Timeout(), predicate...)
 }
 
 func (p *pageImpl) WaitForNavigation(options ...PageWaitForNavigationOptions) (Response, error) {
@@ -365,15 +364,10 @@ func (p *pageImpl) WaitForResponse(url interface{}, options ...interface{}) Resp
 		option = options[0].(PageWaitForResponseOptions)
 	}
 	if option.Timeout == nil {
-		option.Timeout = Float(p.timeoutSettings.NavigationTimeout())
+		option.Timeout = Float(p.timeoutSettings.Timeout())
 	}
-	deadline := time.After(time.Duration(*option.Timeout) * time.Millisecond)
-	select {
-	case <-deadline:
-		return nil
-	case eventData := <-waitForEvent(p, "response", predicate):
-		return eventData.(*responseImpl)
-	}
+	eventData := <-waitForEvent(p, "response", p.timeoutSettings.Timeout(), predicate)
+	return eventData.(*responseImpl)
 }
 
 func (p *pageImpl) ExpectEvent(event string, cb func() error, predicates ...interface{}) (interface{}, error) {

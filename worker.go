@@ -83,7 +83,7 @@ func (w *workerImpl) onClose() {
 }
 
 func (w *workerImpl) WaitForEvent(event string, predicate ...interface{}) interface{} {
-	return <-waitForEvent(w, event, predicate...)
+	return <-waitForEvent(w, event, w.context.timeoutSettings.Timeout(), predicate...)
 }
 
 func (w *workerImpl) ExpectEvent(event string, cb func() error, predicates ...interface{}) (interface{}, error) {
