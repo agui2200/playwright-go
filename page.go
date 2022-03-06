@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"reflect"
+	"time"
 )
 
 type pageImpl struct {
@@ -359,7 +360,20 @@ func (p *pageImpl) WaitForResponse(url interface{}, options ...interface{}) Resp
 		}
 		return true
 	}
-	return p.WaitForEvent("response", predicate).(*responseImpl)
+	option := PageWaitForResponseOptions{}
+	if len(options) == 1 {
+		option = options[0].(PageWaitForResponseOptions)
+	}
+	if option.Timeout == nil {
+		option.Timeout = Float(p.timeoutSettings.NavigationTimeout())
+	}
+	deadline := time.After(time.Duration(*option.Timeout) * time.Millisecond)
+	select {
+	case <-deadline:
+		return nil
+	case eventData := <-waitForEvent(p, "response", predicate):
+		return eventData.(*responseImpl)
+	}
 }
 
 func (p *pageImpl) ExpectEvent(event string, cb func() error, predicates ...interface{}) (interface{}, error) {

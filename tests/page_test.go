@@ -924,3 +924,11 @@ func TestPageSetChecked(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, isChecked.(bool))
 }
+
+func TestPageWaitForResponse(t *testing.T) {
+	BeforeEach(t)
+	defer AfterEach(t)
+	// testing wait timeout
+	require.Equal(t, nil, page.WaitForResponse("http://example.com/api", playwright.PageWaitForResponseOptions{Timeout: playwright.Float(1000)}))
+
+}
