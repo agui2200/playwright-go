@@ -53,8 +53,7 @@ func (b *browserContextImpl) Tracing() Tracing {
 
 func (b *browserContextImpl) NewCDPSession(page Page) (CDPSession, error) {
 	channel, err := b.channel.Send("newCDPSession", map[string]interface{}{
-		"sdkLanguage": "javascript",
-		"page":        page.(*pageImpl).channel,
+		"page": page.(*pageImpl).channel,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not send message: %w", err)
@@ -363,7 +362,7 @@ func newBrowserContext(parent *channelOwner, objectType string, guid string, ini
 		bindings:        make(map[string]BindingCallFunction),
 	}
 	bt.createChannelOwner(bt, parent, objectType, guid, initializer)
-	bt.tracing = newTracing(bt)
+	bt.tracing = fromChannel(initializer["tracing"]).(*tracingImpl)
 	bt.channel.On("bindingCall", func(params map[string]interface{}) {
 		bt.onBinding(fromChannel(params["binding"]).(*bindingCallImpl))
 	})
